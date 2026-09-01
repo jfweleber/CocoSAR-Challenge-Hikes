@@ -1,0 +1,56 @@
+# ==============================================================================
+# Files excluded from the public repository.
+#
+# Grouped by reason rather than alphabetically, because the first two groups
+# are the ones that would actually hurt if they leaked and they deserve to be
+# read, not skimmed.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Member data — never commit, under any circumstances
+# ------------------------------------------------------------------------------
+# challenge.db holds real names, email addresses and password hashes for a live
+# search-and-rescue team. uploads/ holds their photos and their recorded GPX
+# tracks, which are movement data tied to identifiable people. Neither is
+# needed to run the app: tools/init_db.py builds an empty schema and
+# app/__init__.py creates the upload subdirectories at startup.
+*.db
+*.db-journal
+*.db-wal
+*.bak
+app/uploads/
+
+# ------------------------------------------------------------------------------
+# Secrets
+# ------------------------------------------------------------------------------
+# Real configuration lives in /etc/challenge.env on the server, root-owned and
+# mode 600, loaded by systemd via EnvironmentFile. Nothing that resembles a
+# credential belongs in this tree. challenge.env.example documents the
+# variables the app expects, with placeholder values only.
+*.env
+.env
+challenge.env
+!challenge.env.example
+
+# ------------------------------------------------------------------------------
+# Python build artifacts
+# ------------------------------------------------------------------------------
+venv/
+__pycache__/
+*.py[cod]
+
+# ------------------------------------------------------------------------------
+# Local working files — useful to the maintainer, noise to everyone else
+# ------------------------------------------------------------------------------
+# CLAUDE.md and the commenting guide describe how this project is worked on
+# rather than what it does, and the deploy notes and route files are specific
+# to one team's operations. They stay on disk; they just don't ship.
+.claude/
+CLAUDE.md
+DEPLOY-NOTES.md
+educational_commenting_guide.md
+To Test/
+*.zip
+*.gpx
+challenge-announcement-*.txt
+flag-slabbath-notes.txt

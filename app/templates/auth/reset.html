@@ -1,0 +1,40 @@
+{#
+    ============================================================
+    Template: auth/reset.html
+    Extends:  base.html
+    Purpose:  Set-new-password form. Only rendered when the token
+              in the URL has been validated as still-valid by the
+              auth.reset() GET handler. On POST, the route consumes
+              the token atomically and updates the user's password
+              hash.
+
+              The user's email isn't shown or asked for here — the
+              token in the URL already identifies the user. Echoing
+              the email would leak it back to anyone holding the
+              reset link.
+
+    Variables passed in from auth.reset():
+      - token: the URL-safe token string. The form action re-posts
+               it back to the same /reset/<token> URL so the POST
+               handler knows which user to update.
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Set new password — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+
+{% block content %}
+<h2>Set a new password</h2>
+<p>This updates the password on your account immediately. After saving, log in with the new one.</p>
+
+<form method="post" action="{{ url_for('auth.reset', token=token) }}" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>
+        New password (8+ characters)
+        <input type="password" name="password" required minlength="8" autofocus>
+    </label>
+    <div class="form-actions">
+        <button type="submit">Update password</button>
+        <a href="{{ url_for('auth.login') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

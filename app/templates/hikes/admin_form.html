@@ -1,0 +1,63 @@
+{#
+    ============================================================
+    Template: hikes/admin_form.html
+    Extends:  base.html
+    Purpose:  Combined add/edit form for a single hike. The same
+              template handles both flows — `hike` being None means
+              "new hike" mode (route file required, slug must be
+              unique); a non-None `hike` means edit mode (route
+              file optional, blank keeps the existing route).
+
+              When server-side validation rejects a POST, the route
+              re-renders this template with form_values populated
+              from the rejected input so the form stays filled in
+              alongside the flashed error messages.
+
+    Variables passed in from hikes.admin_new() / admin_edit():
+      - hike:        sqlite3.Row of the existing hike, or None
+                     when adding a brand-new one
+      - form_values: dict of just-submitted form values, only set
+                     after a failed POST validation. The `vals`
+                     local below picks whichever is appropriate.
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}{{ 'Edit hike' if hike else 'New hike' }} — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+{% block content %}
+{% set vals = form_values or hike or {} %}
+<h2>{{ 'Edit hike' if hike else 'New hike' }}</h2>
+<form method="post" enctype="multipart/form-data" class="admin-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>
+        Name
+        <input type="text" name="name" value="{{ vals.name or '' }}" required autofocus>
+    </label>
+    <label>
+        Slug <span class="hint">optional; auto-derived from name if blank. Lowercase letters, digits, hyphens.</span>
+        <input type="text" name="slug" value="{{ vals.slug or (hike.slug if hike else '') }}" pattern="[a-z0-9-]*">
+    </label>
+    <label>
+        Posted on
+        {# The only date a hike carries. A date in the future queues the
+           Challenge: it stays out of the hero and refuses completions
+           until that day, then opens and never closes. #}
+        <span class="hint">The day this Challenge drops. Set it in the future to
+            queue a reveal. There is no closing date — once posted, a Challenge
+            stays open permanently.</span>
+        <input type="date" name="posted_on" value="{{ vals.posted_on or '' }}" required>
+    </label>
+    <label>
+        Notes
+        <textarea name="notes" rows="5">{{ vals.notes or '' }}</textarea>
+    </label>
+    <label>
+        Route file (GPX or KML)
+        {% if hike %}<span class="hint">Leave blank to keep the existing route.</span>{% endif %}
+        <input type="file" name="route" accept=".gpx,.kml" {% if not hike %}required{% endif %}>
+    </label>
+    <div class="form-actions">
+        <button type="submit">{{ 'Save changes' if hike else 'Create hike' }}</button>
+        <a href="{{ url_for('hikes.admin_list') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

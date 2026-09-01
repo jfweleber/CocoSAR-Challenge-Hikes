@@ -1,0 +1,36 @@
+{#
+    ============================================================
+    Template: csrf_error.html
+    Extends:  base.html
+    Purpose:  Shown when a form is submitted without a valid CSRF
+              token (HTTP 400). Registered as the CSRFError
+              handler in the app factory.
+
+              Written for the innocent case, because that is
+              almost always what happened: a stale tab, a
+              cleared cookie, a form left open across a logout.
+              The wording deliberately avoids accusing the
+              reader of anything -- someone who genuinely just
+              lost an hour of typing does not need to be told
+              about forgery.
+
+    Variables: reason -- Flask-WTF's own description of the
+               failure. Shown in small print for the rare case
+               where it's diagnostically useful.
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Session expired — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+
+{% block content %}
+<h2>That form couldn't be submitted</h2>
+
+<p>Your session didn't match the form you sent. This almost always means the
+page had been sitting open for a while, or you logged out in another tab.</p>
+
+<p><strong>Reload the page and submit it again</strong> and it should go
+through. If you were part way through writing something, use your browser's
+Back button first — your text is usually still in the form.</p>
+
+<p class="muted"><small>Technical detail: {{ reason }}</small></p>
+{% endblock %}

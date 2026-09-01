@@ -1,0 +1,75 @@
+{#
+    ============================================================
+    Template: profiles/edit.html
+    Extends:  base.html
+    Purpose:  Owner-only form to change the logged-in user's
+              display name and avatar. Email and password are
+              intentionally not editable here — see the route
+              docstring in profiles.py for the reasoning.
+
+              New avatars go through the shared photo_utils
+              pipeline (same as completion photos), so HEIC
+              iPhone shots get converted to JPEG and EXIF
+              rotation is baked into the pixels.
+
+    Variables passed in from profiles.edit():
+      - form_values: dict of just-rejected POST values, set
+                     only after a failed validation. None on
+                     the initial GET — the template falls back
+                     to current_user values in that case.
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Edit profile — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+
+{% block content %}
+<h2>Edit profile</h2>
+
+<form method="post" enctype="multipart/form-data" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>
+        Name
+        {# On a failed POST, form_values is set and we show what the user
+           just typed (even if it was empty — so they can correct it).
+           On a fresh GET, form_values is None and we prefill with the
+           current name. #}
+        <input type="text" name="name"
+               value="{{ form_values.name if form_values else current_user.name }}"
+               required autofocus>
+    </label>
+
+    <label>
+        Email <span class="hint">(login email — can't be changed here)</span>
+        {# Read-only display. disabled inputs aren't submitted with the
+           form, which is exactly what we want — the route never reads
+           an email from this form. #}
+        <input type="email" value="{{ current_user.email }}" disabled>
+    </label>
+
+    {% if current_user.avatar_filename %}
+    <fieldset>
+        <legend>Current avatar</legend>
+        <div class="existing-avatar">
+            <img class="existing-avatar-img"
+                 src="{{ url_for('uploaded_file', subdir='avatars', filename=current_user.avatar_filename) }}"
+                 alt="">
+            <label class="remove-checkbox">
+                <input type="checkbox" name="remove_avatar">
+                Remove this avatar
+            </label>
+        </div>
+    </fieldset>
+    {% endif %}
+
+    <label>
+        {% if current_user.avatar_filename %}Replace avatar{% else %}Upload avatar{% endif %}
+        <span class="hint">JPG, PNG, WEBP, HEIC, or GIF. iPhone HEIC photos get converted to JPEG automatically.</span>
+        <input type="file" name="avatar" accept="image/*,.heic,.heif">
+    </label>
+
+    <div class="form-actions">
+        <button type="submit">Save changes</button>
+        <a href="{{ url_for('profiles.me') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

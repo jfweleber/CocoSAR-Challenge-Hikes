@@ -1,0 +1,147 @@
+{#
+    ============================================================
+    Template: completions/edit.html
+    Extends:  base.html
+    Purpose:  Edit form for an existing completion. Lists existing
+              photos and tracks with per-row "Remove" checkboxes
+              and accepts new uploads alongside.
+
+              The map (completion_edit_map.js) overlays the user's
+              tracks in orange over the hike's official route. The
+              public per-completion page shows the same overlay; the
+              hike detail page itself still doesn't draw tracks.
+
+              Owner-or-admin gate is enforced server-side in
+              completions.edit(); this template trusts that gate
+              and renders unconditionally.
+
+    Variables passed in from completions.edit():
+      - completion:     sqlite3.Row of the completion being edited
+      - hike:           sqlite3.Row of its parent hike
+      - photos:         list of completion_photos rows
+      - tracks:         list of completion_tracks rows
+      - max_date:       upper bound for the completed_on date picker
+      - track_geojsons: parsed list of GeoJSON Features (one per
+                        track), passed to the map JS via data attr
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Edit completion — {{ hike.name }}{% endblock %}
+
+{% block head_extra %}
+    {% if tracks %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<h2>Edit your completion: {{ hike.name }}</h2>
+
+<form method="post" enctype="multipart/form-data" class="completion-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>
+        Completion date
+        <input type="date" name="completed_on"
+               value="{{ completion.completed_on or '' }}"
+               min="{{ hike.posted_on }}" max="{{ max_date }}" required>
+    </label>
+
+    <label>
+        Comment <span class="hint">(optional)</span>
+        <textarea name="comment" rows="4">{{ completion.comment or '' }}</textarea>
+    </label>
+
+    {% if photos %}
+    <fieldset>
+        <legend>Existing photos</legend>
+        <ul class="existing-files">
+            {% for photo in photos %}
+            <li>
+                {# Thumbnail here too — this list can hold eight photos and
+                   it's only ever used to tick a Remove box. #}
+                <img src="{{ url_for('uploaded_file', subdir='photos', filename='thumbs/' ~ photo.thumb_filename) if photo.thumb_filename else url_for('uploaded_file', subdir='photos', filename=photo.filename) }}"
+                     alt="" loading="lazy">
+                <label class="remove-checkbox">
+                    <input type="checkbox" name="remove_photos" value="{{ photo.id }}">
+                    Remove
+                </label>
+            </li>
+            {% endfor %}
+        </ul>
+    </fieldset>
+    {% endif %}
+
+    <label>
+        Add photos
+        {# Limits pulled from config so the hint always matches what the route enforces. #}
+        <span class="hint">JPG, PNG, WEBP, HEIC, or GIF &mdash; {{ config.MAX_PHOTO_BYTES // (1024 * 1024) }} MB each,
+            up to {{ config.MAX_PHOTOS_PER_COMPLETION }} photos total. Multiple OK.</span>
+        <input type="file" name="photos" accept="image/*,.heic,.heif" multiple>
+    </label>
+
+    {% if tracks %}
+    <fieldset>
+        <legend>Existing tracks</legend>
+        <ul class="existing-files">
+            {% for track in tracks %}
+            <li class="track-row">
+                <a href="{{ url_for('uploaded_file', subdir='tracks', filename=track.filename) }}">
+                    {{ track.format | upper }} track
+                </a>
+                {% if track.distance_m %}<span class="track-stat">{{ '%.1f' | format(track.distance_m / 1609.344) }} mi</span>{% endif %}
+                {% if track.elev_gain_m %}<span class="track-stat">{{ '%.0f' | format(track.elev_gain_m * 3.28084) }} ft gain</span>{% endif %}
+                <label class="remove-checkbox">
+                    <input type="checkbox" name="remove_tracks" value="{{ track.id }}">
+                    Remove
+                </label>
+            </li>
+            {% endfor %}
+        </ul>
+    </fieldset>
+
+    {# Map showing the official hike route (navy) plus all your tracks
+       (orange dashed). Only rendered when at least one track exists. #}
+    <div id="edit-map" class="hike-map"
+         data-route='{{ hike.route_geojson | safe }}'
+         data-tracks='{{ track_geojsons | tojson | safe }}'></div>
+    {% endif %}
+
+    <label>
+        Add tracks
+        <span class="hint">GPX or KML. Multiple OK.</span>
+        <input type="file" name="tracks" accept=".gpx,.kml" multiple>
+    </label>
+
+    {% if current_user.is_admin %}
+    {# Admin-only: the leaderboard/duck counting flag. Owners editing their own
+       completion never see this, and the route only honors it for admins. #}
+    <label class="admin-flag">
+        <input type="checkbox" name="counts" {% if completion.counts %}checked{% endif %}>
+        Counts toward ducks &amp; leaderboard
+    </label>
+    <span class="hint">Admin only. Uncheck to keep this completion visible (track and
+        all) but award no duck &mdash; e.g. an instructive failed attempt.</span>
+    {% endif %}
+
+    <div class="form-actions">
+        <button type="submit">Save changes</button>
+        <a href="{{ url_for('hikes.detail', slug=hike.slug) }}">Cancel</a>
+    </div>
+</form>
+
+{# Delete is a separate form so the confirm() prompt only triggers on the
+   destructive action. Sits visually below the main edit form. #}
+<form method="post" action="{{ url_for('completions.delete', completion_id=completion.id) }}"
+      onsubmit="return confirm('Delete this completion entirely? Photos and tracks will go too. This can’t be undone.');"
+      class="completion-delete-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="link-button">Delete this completion</button>
+</form>
+{% endblock %}
+
+{% block body_end %}
+{% if tracks %}
+    <script src="{{ url_for('static', filename='js/completion_edit_map.js') }}"></script>
+{% endif %}
+{% endblock %}

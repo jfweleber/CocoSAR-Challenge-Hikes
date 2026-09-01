@@ -1,0 +1,45 @@
+{#
+    ============================================================
+    Template: auth/register.html
+    Extends:  base.html
+    Purpose:  Self-registration form. Collects name, email,
+              password, and an optional avatar image. Server-side
+              validation in auth.register() enforces password
+              length, email format, and email uniqueness; avatar
+              extensions are whitelisted to jpg/jpeg/png/gif/webp.
+
+              On success the new user is logged in immediately
+              and redirected home — no email verification flow
+              (out of scope for v1; see CLAUDE.md).
+
+    Variables passed in from auth.register():
+      - name  (optional): preserved across failed-validation rerenders
+      - email (optional): preserved across failed-validation rerenders
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Register — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+{% block content %}
+<h2>Create account</h2>
+<form method="post" enctype="multipart/form-data" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>
+        Name
+        <input type="text" name="name" value="{{ name or '' }}" required autofocus>
+    </label>
+    <label>
+        Email
+        <input type="email" name="email" value="{{ email or '' }}" required>
+    </label>
+    <label>
+        Password (8+ characters)
+        <input type="password" name="password" required minlength="8">
+    </label>
+    <label>
+        Avatar (optional)
+        <input type="file" name="avatar" accept="image/*">
+    </label>
+    <button type="submit">Register</button>
+</form>
+<p class="auth-alt"><a href="{{ url_for('auth.login') }}">Already have an account? Log in.</a></p>
+{% endblock %}

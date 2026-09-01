@@ -1,0 +1,178 @@
+{#
+    ============================================================
+    Template: hikes/detail.html
+    Extends:  base.html
+    Purpose:  Single Challenge Hike detail view. Renders the route
+              polyline on a Leaflet map (hike_map.js), the elevation
+              profile as a Chart.js area chart (hike_elevation.js),
+              a state-aware CTA block for the logged-in user, and
+              the completion roll for everyone who's earned the
+              duck for this hike.
+
+              Only the official route is drawn on this map. Other
+              members' tracks aren't overlaid here — not because
+              they're private (they aren't; every track is public
+              on its own /completions/<id> page), but because a
+              dozen overlapping GPS traces makes the route itself
+              unreadable. Click a completion to see that person's
+              track drawn over the route.
+
+    Variables passed in from hikes.detail():
+      - hike:            sqlite3.Row from the hikes table
+      - state:           'upcoming' or 'open' — hikes never close
+      - today:           today's ISO date string
+      - tallies:         row with .completions (people) and .ducks
+                         (SUM of counts); they differ only when an
+                         admin has flagged a completion
+      - completions:     list of {row, photos} dicts (newest first)
+      - user_completion: row of the current user's completion, or
+                         None if they haven't submitted (or aren't
+                         logged in)
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}{{ hike.name }} — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+
+{% block head_extra %}
+    {# Leaflet (route map) and Chart.js (elevation profile) from public
+       CDNs. Versions pinned so an upstream breaking change can't shift
+       page behavior silently. #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
+{% endblock %}
+
+{% block content %}
+<article class="hike-detail">
+    <h2>{{ hike.name }}</h2>
+    <p class="hike-meta">
+        <span>{{ 'Drops' if state == 'upcoming' else 'Posted' }} {{ hike.posted_on }}</span>
+        {# Distance and elevation gain are stored in SI in the DB.
+           Imperial conversion happens at display time only. #}
+        {% if hike.distance_m %}<span>{{ '%.2f' | format(hike.distance_m / 1609.344) }} mi</span>{% endif %}
+        {% if hike.elev_gain_m %}<span>{{ '%.0f' | format(hike.elev_gain_m * 3.28084) }} ft gain</span>{% endif %}
+        <span class="hike-format">{{ hike.route_format | upper }}</span>
+    </p>
+
+    {% if hike.notes %}<div class="hike-notes">{{ hike.notes }}</div>{% endif %}
+
+    {# Route GeoJSON injected via data attribute (single-quoted). The
+       JSON's double quotes don't break out of the attribute; JSON.parse
+       on the client side can't execute arbitrary code the way an inline
+       <script> would. #}
+    <div id="hike-map" class="hike-map" data-geojson='{{ hike.route_geojson | safe }}'></div>
+
+    {# Chart.js needs a canvas; wrapper div sets the height because the
+       chart runs with maintainAspectRatio:false. #}
+    <div class="hike-elevation-wrap">
+        <canvas id="hike-elevation"></canvas>
+    </div>
+
+    {# ============================================================
+       CTA block — what action does the logged-in user see?
+       The exact wording depends on (a) whether they're logged in,
+       (b) whether they have an existing completion, and (c) the
+       hike's state relative to today.
+       ============================================================ #}
+    <section class="completion-cta">
+        {% if state == 'upcoming' %}
+            <p>This Challenge drops on <strong>{{ hike.posted_on }}</strong>.</p>
+        {% elif not current_user.is_authenticated %}
+            <p><a href="{{ url_for('auth.login') }}">Log in</a>
+               or <a href="{{ url_for('auth.register') }}">register</a>
+               to record your completion.</p>
+        {% elif user_completion %}
+            <p>You completed this hike on <strong>{{ user_completion.completed_on }}</strong>.</p>
+            <p><a class="button" href="{{ url_for('completions.edit', completion_id=user_completion.id) }}">View / edit your completion</a></p>
+        {% else %}
+            <p><a class="button" href="{{ url_for('completions.submit', slug=hike.slug) }}">I completed this hike</a></p>
+            {# Shown on every open hike, not just recent ones. Someone
+               looking at a route posted two years ago is the reader who
+               most needs to be told it still counts. #}
+            <p class="cta-note">No deadline — this Challenge is open indefinitely.</p>
+        {% endif %}
+    </section>
+
+    {% if hike.id and (current_user.is_authenticated and current_user.is_admin) %}
+    <p class="admin-inline-actions">
+        <a href="{{ url_for('hikes.admin_edit', hike_id=hike.id) }}">Edit this hike</a>
+    </p>
+    {% endif %}
+
+    {# ============================================================
+       Completion roll — everyone who's earned the duck for this
+       hike. The name links to their public profile; "View completion"
+       opens the per-completion page (track map + full gallery).
+       Photos render inline as a click-to-open lightbox carousel.
+       ============================================================ #}
+    {% if completions %}
+    <section class="completions">
+        {# "Completions" counts people; the duck line only appears when an
+           admin flag makes the two numbers disagree, so the common case
+           stays uncluttered. #}
+        <h3>Completions ({{ tallies.completions }})</h3>
+        {% if tallies.ducks != tallies.completions %}
+        <p class="completions-duck-note">
+            {{ tallies.ducks }} duck{{ '' if tallies.ducks == 1 else 's' }} awarded &mdash;
+            the rest are logged but not tallied.
+        </p>
+        {% endif %}
+        <ul class="completion-list">
+            {% for c in completions %}
+            <li class="completion-card">
+                <div class="completion-header">
+                    {% if c.row.user_avatar %}
+                        <img class="completion-avatar"
+                             src="{{ url_for('uploaded_file', subdir='avatars', filename=c.row.user_avatar) }}"
+                             alt="">
+                    {% else %}
+                        {# No avatar uploaded — show the user's first initial
+                           in a colored circle as a graceful fallback. #}
+                        <span class="completion-avatar avatar-placeholder">{{ c.row.user_name[0] | upper }}</span>
+                    {% endif %}
+                    <div class="completion-byline">
+                        <strong><a href="{{ url_for('profiles.view', user_id=c.row.user_id) }}">{{ c.row.user_name }}</a></strong>
+                        {# Admin-flagged "doesn't count": shown here, but no duck awarded. #}
+                        {% if not c.row.counts %}<span class="badge-noduck">Solid, but no duck</span>{% endif %}
+                        <span class="completion-date">completed {{ c.row.completed_on }}</span>
+                    </div>
+                    <a class="completion-view-link" href="{{ url_for('completions.view', completion_id=c.row.id) }}">View completion</a>
+                    {% if current_user.is_authenticated and (current_user.id == c.row.user_id or current_user.is_admin) %}
+                        <a class="completion-edit" href="{{ url_for('completions.edit', completion_id=c.row.id) }}">Edit</a>
+                    {% endif %}
+                </div>
+                {% if c.row.comment %}<p class="completion-comment">{{ c.row.comment }}</p>{% endif %}
+                {% if c.photos %}
+                <div class="completion-photos photo-gallery" data-lightbox>
+                    {% for photo in c.photos %}
+                    {# href = full size (what the lightbox opens), src = the
+                       grid thumbnail. photo.thumb_filename is NULL for anything
+                       uploaded before thumbnails existed and for animated GIFs,
+                       which we never flatten — both fall back to the full file,
+                       so the grid is always correct even if the backfill script
+                       hasn't been run on this server yet. #}
+                    <a class="photo-thumb"
+                       href="{{ url_for('uploaded_file', subdir='photos', filename=photo.filename) }}"
+                       {% if photo.caption %}data-caption="{{ photo.caption }}"{% endif %}>
+                        <img src="{{ url_for('uploaded_file', subdir='photos', filename='thumbs/' ~ photo.thumb_filename) if photo.thumb_filename else url_for('uploaded_file', subdir='photos', filename=photo.filename) }}"
+                             alt="completion photo by {{ c.row.user_name }}" loading="lazy">
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</article>
+{% endblock %}
+
+{% block body_end %}
+    {# Run client scripts at the end of <body> so the target DOM
+       nodes (and the L and Chart globals) are guaranteed to exist
+       when these execute. No DOMContentLoaded guard needed. #}
+    <script src="{{ url_for('static', filename='js/hike_map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/hike_elevation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/lightbox.js') }}"></script>
+{% endblock %}

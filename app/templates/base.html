@@ -1,0 +1,71 @@
+{#
+    ============================================================
+    Template: base.html
+    Extends:  (none — this is the root layout)
+    Purpose:  Site-wide layout. All other templates extend this
+              and override {% block title %} and {% block content %},
+              with optional overrides of {% block head_extra %} and
+              {% block body_end %} for per-page CSS/JS.
+
+              The header renders a context-aware nav: "Log in /
+              Register" when anonymous; greeting + a POST "Log out"
+              form when authenticated; plus an "Admin" link when
+              the user has is_admin = 1.
+
+              Flash messages from Flask's flash() API render at
+              the top of <main> with category-styled classes
+              (flash-success, flash-error, flash-info).
+
+    Variables expected:
+      - current_user: injected automatically by Flask-Login
+      - Anything provided by the extending template's blocks
+    ============================================================
+#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}CocoSAR Mountain Rescue Challenge Hikes{% endblock %}</title>
+    {# Favicon — separate smaller PNG, not the leaderboard duck. Convention
+       is to declare the favicon before the stylesheet so browsers can
+       start fetching the tab icon in parallel with the page content. #}
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <h1><a href="{{ url_for('index') }}">CocoSAR Mountain Rescue Challenge Hikes</a></h1>
+        <nav class="site-nav">
+            <a href="{{ url_for('hikes.catalog') }}">Hikes</a>
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('hikes.admin_list') }}">Admin</a>
+                {% endif %}
+                <a class="nav-greeting" href="{{ url_for('profiles.me') }}">Hi, {{ current_user.name }}</a>
+                <form method="post" action="{{ url_for('auth.logout') }}" class="nav-logout">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit">Log out</button>
+                </form>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Log in</a>
+                <a href="{{ url_for('auth.register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+    <main class="site-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="flash flash-{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+    {% block body_end %}{% endblock %}
+</body>
+</html>

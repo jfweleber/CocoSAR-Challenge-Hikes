@@ -1,0 +1,75 @@
+{#
+    ============================================================
+    Template: completions/submit.html
+    Extends:  base.html
+    Purpose:  New-completion submission form. The user self-attests
+              the completion date via an HTML date input bounded to
+              (posted date .. today) — you can't claim a Challenge
+              with a hike you did before it was posted, and you
+              can't pre-claim one you haven't done. They
+              attach one or more photos and/or tracks as proof. The
+              server-side validation in completions.submit() is the
+              authoritative gate; the min/max attributes on the date
+              input are a UX hint only.
+
+    Variables passed in from completions.submit():
+      - hike:        sqlite3.Row of the parent hike
+      - state:       always 'open' here (an upcoming hike is
+                     intercepted by the route before this template
+                     runs, and nothing else can block a submission)
+      - today:       today's ISO date
+      - max_date:    today — upper bound for the date picker
+      - form_values: dict of just-rejected POST values, set only
+                     after a failed validation
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Record completion — {{ hike.name }}{% endblock %}
+
+{% block content %}
+{% set vals = form_values or {} %}
+
+<h2>Record completion: {{ hike.name }}</h2>
+
+<p class="window-note">
+    This Challenge was posted <strong>{{ hike.posted_on }}</strong> and has no
+    closing date. Enter the day you actually hiked it — any date from the
+    posting through today.
+</p>
+
+<form method="post" enctype="multipart/form-data" class="completion-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>
+        Completion date
+        <input type="date" name="completed_on"
+               value="{{ vals.completed_on or '' }}"
+               min="{{ hike.posted_on }}" max="{{ max_date }}" required>
+    </label>
+
+    <label>
+        Photos
+        {# Limits pulled from config so the hint always matches what the route enforces. #}
+        <span class="hint">JPG, PNG, WEBP, HEIC, or GIF &mdash; up to
+            {{ config.MAX_PHOTOS_PER_COMPLETION }} photos, {{ config.MAX_PHOTO_BYTES // (1024 * 1024) }} MB each.
+            Select multiple files at once. HEIC photos from iPhones get converted to JPEG automatically.</span>
+        <input type="file" name="photos" accept="image/*,.heic,.heif" multiple>
+    </label>
+
+    <label>
+        Tracks
+        <span class="hint">GPX or KML — export from Strava, Garmin Connect,
+            Gaia, or any GPS recorder. Multiple files OK.</span>
+        <input type="file" name="tracks" accept=".gpx,.kml" multiple>
+    </label>
+
+    <label>
+        Comment <span class="hint">(optional)</span>
+        <textarea name="comment" rows="4">{{ vals.comment or '' }}</textarea>
+    </label>
+
+    <div class="form-actions">
+        <button type="submit">Submit completion</button>
+        <a href="{{ url_for('hikes.detail', slug=hike.slug) }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

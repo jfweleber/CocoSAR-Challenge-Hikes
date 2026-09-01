@@ -1,0 +1,246 @@
+{#
+    ============================================================
+    Template: index.html
+    Extends:  base.html
+    Purpose:  Site landing page. Four vertical sections:
+
+              1. Hero — state-aware. Three possible states:
+                   A. featured_hike set   → newest Challenge with
+                                            route map + CTA
+                   B. nothing posted yet, → countdown to the first
+                      one queued            drop
+                   C. nothing at all      → 'being planned'
+                 Leaflet is loaded conditionally — only state A
+                 renders a map, so we skip the CDN cost otherwise.
+
+              2. Recent finishers — the newest completions across
+                 the whole catalog. Replaces the old between-
+                 quarters "victory lap" block, which can no longer
+                 render now that hikes never close.
+
+              3. Story block — "A Duck?! For What?". Static
+                 content; edit the paragraphs below to update lore.
+
+              4. Team leaderboard.
+
+              A note on the word "featured": the hero hike is not
+              the only one you can do — every posted hike is open
+              forever. It's just the newest, and therefore the one
+              worth putting in front of someone who lands here.
+              The copy below is careful about that distinction.
+
+    Variables passed in from app.index():
+      - featured_hike:    sqlite3.Row or None — state A
+      - featured_tallies: row with .completions and .ducks for the
+                          featured hike (None when no featured hike)
+      - upcoming_hike:    sqlite3.Row or None — a queued future drop
+      - days_until_next:  int or None
+      - recent_finishers: rows from list_recent_completions() with
+                          user + hike columns joined in
+      - leaderboard:      list of rank-annotated dicts
+    ============================================================
+#}
+{% extends "base.html" %}
+
+{% block head_extra %}
+{% if featured_hike %}
+    {# Leaflet only loaded when the hero needs a map. Pinned
+       versions for the same reasons as on the detail page. #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   HERO BLOCK — state-aware
+   ============================================================ #}
+
+{% if featured_hike %}
+    {# -------- State A: newest posted Challenge -------- #}
+    <section class="hero hero-active">
+        <h2>Latest Challenge: {{ featured_hike.name }}</h2>
+        {# Same data-attribute pattern the detail page uses, so
+           hike_map.js renders into #hike-map without modification.
+           data-static="true" tells hike_map.js to disable all user
+           interactions — the hero map is a decorative preview and a
+           click-through to the interactive detail page, not an
+           exploration tool. Especially important on mobile where an
+           interactive map intercepts touch-drag events meant for page
+           scroll. #}
+        <div id="hike-map" class="hero-map"
+             data-geojson='{{ featured_hike.route_geojson | safe }}'
+             data-static="true"></div>
+        <p class="hero-stats">
+            {% if featured_hike.distance_m %}<span>{{ '%.1f' | format(featured_hike.distance_m / 1609.344) }} mi</span>{% endif %}
+            {% if featured_hike.elev_gain_m %}<span>{{ '%.0f' | format(featured_hike.elev_gain_m * 3.28084) }} ft gain</span>{% endif %}
+            {# "completions" = people, so this is the row count. The duck
+               tally is a separate number and appears where a duck icon
+               does; see the counting note in models.list_hikes(). #}
+            <span>{{ featured_tallies.completions }} completion{{ '' if featured_tallies.completions == 1 else 's' }} so far</span>
+            <span class="hero-open">Posted {{ featured_hike.posted_on }} &middot; open indefinitely</span>
+        </p>
+        <p>
+            <a class="button" href="{{ url_for('hikes.detail', slug=featured_hike.slug) }}">View route &amp; record your completion</a>
+        </p>
+        {# The one line on the whole site that explains the model. Worth
+           the space on the landing page: a member who assumes they missed
+           their chance on the last three Challenges is exactly the person
+           this change was made for. #}
+        <p class="hero-note">
+            Every Challenge stays open — nothing expires. Work through the
+            <a href="{{ url_for('hikes.catalog') }}">back catalog</a> at your own pace.
+        </p>
+    </section>
+
+    {# Small "Up next" strip under the hero — only renders when a future
+       hike is queued. The hike name links to the detail page, so if you'd
+       rather keep the next route secret until reveal day, just don't
+       create the DB row until then. #}
+    {% if upcoming_hike %}
+    <aside class="next-up">
+        <span class="next-up-label">Up next:</span>
+        <a class="next-up-name" href="{{ url_for('hikes.detail', slug=upcoming_hike.slug) }}">{{ upcoming_hike.name }}</a>
+        <span class="next-up-when">
+            {% if days_until_next == 1 %}drops tomorrow
+            {% else %}drops in {{ days_until_next }} days
+            {% endif %}
+        </span>
+    </aside>
+    {% endif %}
+
+{% elif upcoming_hike %}
+    {# -------- State B: nothing posted yet, but one is queued --------
+       Only reachable on a brand-new install where the first Challenge
+       has been created with a future posted_on. Once anything posts,
+       state A takes over permanently. #}
+    <section class="hero hero-victory">
+        <p class="hero-countdown">
+            {% if days_until_next == 1 %}First Challenge drops tomorrow
+            {% else %}First Challenge drops in {{ days_until_next }} days
+            {% endif %}
+        </p>
+        <h2>{{ upcoming_hike.name }}</h2>
+    </section>
+
+{% else %}
+    {# -------- State C: nothing in the DB yet -------- #}
+    <section class="hero hero-empty">
+        <p>The first Challenge Hike is being planned. Stand by.</p>
+    </section>
+{% endif %}
+
+
+{# ============================================================
+   RECENT FINISHERS
+   The newest completions site-wide, not per-hike. Ordered by
+   the date hiked rather than the date submitted, so this reads
+   as recent effort rather than recent paperwork. Someone who
+   walks a two-year-old route today still lands at the top —
+   their completed_on is today — which is the behavior worth
+   celebrating now that the whole catalog is fair game.
+
+   Each chip names the hike as well as the person, because
+   unlike the old victory-lap grid these rows aren't all from
+   the same hike.
+
+   Only duck-earning completions appear. An admin-flagged
+   attempt is still visible on the hike page and the member's
+   profile, but nothing that earned no duck belongs under a
+   heading that says "earned" — so the query filters them and
+   this template needs no no-duck badge.
+   ============================================================ #}
+{% if recent_finishers %}
+<section class="recent">
+    <h2>Recently earned</h2>
+    <ul class="hero-finishers">
+        {% for f in recent_finishers %}
+        <li class="hero-finisher recent-finisher">
+            <a class="hero-finisher-link" href="{{ url_for('completions.view', completion_id=f.id) }}"
+               title="{{ f.user_name }} — {{ f.hike_name }}, {{ f.completed_on }}">
+            {% if f.user_avatar %}
+                <img class="hero-finisher-avatar"
+                     src="{{ url_for('uploaded_file', subdir='avatars', filename=f.user_avatar) }}"
+                     alt="">
+            {% else %}
+                <span class="hero-finisher-avatar avatar-placeholder">{{ f.user_name[0] | upper }}</span>
+            {% endif %}
+            <span class="hero-finisher-name">{{ f.user_name }}</span>
+            <span class="recent-finisher-hike">{{ f.hike_name }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+
+{# ============================================================
+   STORY BLOCK — "A Duck?! For What?"
+   Static content. Edit the paragraphs below to update the lore;
+   no DB table or admin UI for this — it changes rarely.
+   ============================================================ #}
+<section class="story">
+    <h2>A Duck?! For What?</h2>
+    <p>The Challenge Hike was created to honor a simple truth: <strong>Mountain Rescue folks not only need to reach a subject in tough terrain, we need to be able to do meaningful and demanding work once we get there.</strong> It started in 2024 as an informal, sporadic thing, and informal is how it has stayed. The Sheriff's Office can't make anyone do this, which is exactly the point.</p>
+    <p>It's voluntary, the cadence is roughly quarterly, and the routes are picked to drag us into corners of our response area we don't see often, or areas which present specific challenges. The other goal is harder to put on a checklist, but it's best summarized by the word "familiarity". What is the trail like? How would we get a subject out of here? Is a short haul possible? Would we want to stay on the trail or make a beeline straight downhill? Where would our anchors go if it's low-angle/steep/vertical? The Challenge Hike rewards the kind of person who can't turn that part of their brain off, even on a day off.</p>
+    <p>No Challenge ever closes. Once a route is posted it stays open, so a new member isn't shut out of everything that came before they joined, and nobody has to rush a route to beat a deadline. Familiarity with the response area doesn't have an expiration date, and neither does the duck.</p>
+    <p>The reward for finishing is the coolest rubber duck around. Why a duck, you may ask? Partly practical, this team has too many thoughtful eaters for food-based prizes to work, and a duck doesn't care about anyone's macros, allergies, or fasting window. Mostly though: ducks are just inherently good. They are small, they are absurd, they accumulate visibly on a desk or a dashboard, and an MRU member with five ducks is unmistakably a person who has done the work.</p>
+    <p>So, you do the hike, you get the duck, and somewhere along the way you spent a few hours getting better at the job. Win!</p>
+</section>
+
+
+{# ============================================================
+   TEAM LEADERBOARD
+   Only renders when at least one user has earned a duck — the
+   get_leaderboard() query INNER JOINs completions, so an empty
+   team yields an empty list and the whole section disappears.
+
+   entry.rank is competition-ranked: ties share a rank, and the
+   next rank skips by the number of tied entries. So the medal
+   logic keys off rank, not loop.index — two people tied for 2nd
+   both render the silver medal; the next user (at rank 4) gets
+   a plain numeric prefix even though they're the fourth row.
+   ============================================================ #}
+{% if leaderboard %}
+<section class="leaderboard">
+    <h2>Team leaderboard</h2>
+    <ul class="leaderboard-list">
+        {% for entry in leaderboard %}
+        <li class="leaderboard-row{% if entry.rank <= 3 %} leaderboard-podium leaderboard-podium-{{ entry.rank }}{% endif %}">
+            <span class="leaderboard-rank">
+                {% if entry.rank == 1 %}🥇
+                {% elif entry.rank == 2 %}🥈
+                {% elif entry.rank == 3 %}🥉
+                {% else %}{{ entry.rank }}.
+                {% endif %}
+            </span>
+            {% if entry.avatar_filename %}
+                <img class="leaderboard-avatar"
+                     src="{{ url_for('uploaded_file', subdir='avatars', filename=entry.avatar_filename) }}"
+                     alt="">
+            {% else %}
+                <span class="leaderboard-avatar avatar-placeholder">{{ entry.name[0] | upper }}</span>
+            {% endif %}
+            <a class="leaderboard-name" href="{{ url_for('profiles.view', user_id=entry.user_id) }}">{{ entry.name }}</a>
+            <span class="leaderboard-count">
+                <img class="duck-icon"
+                     src="{{ url_for('static', filename='img/duck.png') }}"
+                     alt="duck">
+                <span class="duck-number">{{ entry.duck_count }}</span>
+            </span>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block body_end %}
+{% if featured_hike %}
+    {# hike_map.js only matters when the hero rendered a map. #}
+    <script src="{{ url_for('static', filename='js/hike_map.js') }}"></script>
+{% endif %}
+{% endblock %}

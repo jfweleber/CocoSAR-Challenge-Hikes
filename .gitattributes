@@ -1,0 +1,23 @@
+# ==============================================================================
+# Line-ending policy. This file is not boilerplate — it is load-bearing.
+#
+# Git on Windows defaults to core.autocrlf=true, which rewrites LF to CRLF in
+# the working copy on checkout. This project has already been bitten by that
+# once: a JavaScript file with mixed line endings fails to parse in the browser
+# with no console error at all, and the entire script block silently does
+# nothing. Because deploys go up by FTP rather than by git pull, a normalized
+# CRLF working copy would be uploaded verbatim to the server and reintroduce
+# exactly that failure.
+#
+# Forcing eol=lf means every checkout on every platform matches what the server
+# expects, regardless of the developer's local git settings.
+# ==============================================================================
+
+* text=auto eol=lf
+
+# Binaries git must never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gpx binary
+*.db  binary

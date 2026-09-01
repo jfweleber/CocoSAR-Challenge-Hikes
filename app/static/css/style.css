@@ -1,0 +1,1597 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    color: #222;
+    background: #fafafa;
+}
+
+.site-header {
+    background: #1f3a5f;
+    color: #fff;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.site-header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.site-header h1 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Mobile header — "CocoSAR Mountain Rescue Challenge Hikes" is 39
+   characters wide, which doesn't fit on phone-width viewports at the
+   default 1.4rem size and would wrap to two lines, pushing the nav
+   down. Dropping to 1rem at <= 600px keeps the title on one line
+   down to ~360px viewport widths (the typical modern phone). On
+   smaller-still screens (~320px) the title still wraps; that's fine
+   — those devices are rare and a two-line header doesn't break
+   anything functionally. */
+@media (max-width: 600px) {
+    .site-header h1 {
+        font-size: 1rem;
+    }
+}
+
+.site-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.site-nav a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.site-nav a:hover {
+    text-decoration: underline;
+}
+
+.nav-greeting {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+.nav-logout {
+    margin: 0;
+}
+
+.nav-logout button {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 0.3rem 0.7rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.nav-logout button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.site-main {
+    padding: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* Flash messages */
+
+.flashes {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.flash {
+    padding: 0.6rem 0.85rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.flash-success {
+    background: #e2f5ea;
+    color: #1f5d3a;
+    border: 1px solid #b6e0c4;
+}
+
+.flash-error {
+    background: #fbe3e3;
+    color: #7a1f1f;
+    border: 1px solid #ecbdbd;
+}
+
+.flash-message,
+.flash-info {
+    background: #e7eef7;
+    color: #1f3a5f;
+    border: 1px solid #c4d3e8;
+}
+
+/* Buttons */
+
+.button,
+a.button {
+    display: inline-block;
+    background: #1f3a5f;
+    color: #fff;
+    padding: 0.55rem 1rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+}
+
+.button:hover,
+a.button:hover {
+    background: #284a78;
+    text-decoration: none;
+}
+
+.link-button {
+    background: none;
+    border: none;
+    color: #a02020;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    text-decoration: underline;
+}
+
+/* Auth forms */
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-width: 360px;
+    margin: 1rem 0;
+}
+
+.auth-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.95rem;
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #c7c7c7;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.auth-form input[type="file"] {
+    font-size: 0.9rem;
+}
+
+.auth-form button {
+    margin-top: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: #1f3a5f;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.auth-form button:hover {
+    background: #284a78;
+}
+
+.auth-alt {
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+/* Current hike card on home */
+
+.current-hike-card {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-left: 4px solid #1f3a5f;
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+}
+
+.current-hike-card h2 {
+    margin-top: 0;
+}
+
+/* Hike catalog list */
+
+.hike-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.hike-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0.9rem;
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.hike-list-item > a {
+    flex: 1;
+    color: #1f3a5f;
+    text-decoration: none;
+    font-weight: 500;
+    min-width: 12rem;
+}
+
+.hike-list-item > a:hover {
+    text-decoration: underline;
+}
+
+.hike-dates,
+.hike-dist {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.hike-status {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Status pills. There is no "past" any more — a posted hike is open
+   permanently — so the palette carries a different distinction than it
+   used to. Green marks the newest Challenge (the current headline), blue
+   marks every other posted hike (equally doable, just not the headline),
+   amber marks one that hasn't dropped yet. Deliberately NOT gray for
+   "open": gray reads as expired, which is the exact misunderstanding
+   this whole change is meant to prevent. */
+.hike-newest .hike-status {
+    background: #cce7d6;
+    color: #1f5d3a;
+}
+
+.hike-open .hike-status {
+    background: #d9e2ec;
+    color: #1f3a5f;
+}
+
+.hike-upcoming .hike-status {
+    background: #ffe9c5;
+    color: #7a4a1f;
+}
+
+/* Hike detail */
+
+.hike-detail h2 {
+    margin-top: 0;
+}
+
+.hike-meta {
+    display: flex;
+    gap: 1.5rem;
+    color: #666;
+    font-size: 0.95rem;
+    flex-wrap: wrap;
+}
+
+.hike-format {
+    font-size: 0.75rem;
+    background: #eee;
+    color: #555;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+}
+
+.hike-notes {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1rem 0;
+    white-space: pre-wrap;
+}
+
+.hike-map {
+    width: 100%;
+    height: 480px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1rem 0;
+    background: #e8e8e8;
+}
+
+.admin-inline-actions {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Admin */
+
+.admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.admin-table th {
+    background: #f3f3f3;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.admin-table tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.admin-actions form {
+    display: inline;
+    margin: 0;
+}
+
+.admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-width: 640px;
+    margin: 1rem 0;
+}
+
+.admin-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.admin-form input[type="text"],
+.admin-form input[type="date"],
+.admin-form textarea {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #c7c7c7;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.admin-form textarea {
+    resize: vertical;
+}
+
+.admin-form .hint {
+    color: #888;
+    font-weight: normal;
+    font-size: 0.85rem;
+    margin-left: 0.5rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.form-row label {
+    flex: 1;
+    min-width: 12rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.form-actions a {
+    color: #666;
+    text-decoration: none;
+}
+
+.form-actions a:hover {
+    text-decoration: underline;
+}
+
+/* Elevation profile — Chart.js area chart on the hike detail page.
+   The wrapper sets an explicit height because the chart runs with
+   maintainAspectRatio:false so it can resize horizontally on window
+   changes without growing unbounded vertically. position: relative
+   gives Chart.js a positioning context for its internal canvas sizing. */
+.hike-elevation-wrap {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 0.6rem 0.5rem 0.3rem;
+    margin: 1rem 0;
+    height: 240px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Completion CTA block on the hike detail page.
+   Subtle blue-tinted card that sits between the elevation chart and
+   the completion roll, with a state-aware message inside (login prompt,
+   "submissions open on X", "I completed this hike" button, or
+   "View/edit your completion"). */
+.completion-cta {
+    background: #f7faff;
+    border: 1px solid #dde6f0;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+}
+
+.completion-cta p {
+    margin: 0;
+}
+
+.completion-cta p + p {
+    margin-top: 0.6rem;
+}
+
+/* Completion roll — list of all users who've earned the duck for the hike.
+   Each row is one user's submission with avatar, date, optional comment,
+   and a photo grid. */
+.completions h3 {
+    margin: 2rem 0 0.75rem 0;
+}
+
+.completion-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.completion-card {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 0.9rem 1rem;
+}
+
+.completion-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.4rem;
+}
+
+.completion-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #d9e2ec;
+    color: #34495e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.avatar-placeholder {
+    text-transform: uppercase;
+}
+
+.completion-byline {
+    line-height: 1.2;
+}
+
+.completion-date {
+    display: block;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.completion-edit {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: #1f3a5f;
+}
+
+.completion-comment {
+    margin: 0.4rem 0 0.5rem;
+    color: #444;
+    white-space: pre-wrap;
+}
+
+/* Photo grid. auto-fill keeps columns 140px wide and lays as many
+   columns as fit per row. aspect-ratio:1 makes each thumbnail a square
+   even if the original photo isn't, so the grid stays tidy. */
+.completion-photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.completion-photos img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+    transition: opacity 0.15s;
+}
+
+.completion-photos a:hover img {
+    opacity: 0.85;
+}
+
+/* Completion form (submit and edit share this).
+   max-width caps the form at a readable line length on wide screens. */
+.completion-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-width: 720px;
+    margin: 1rem 0;
+}
+
+.completion-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.completion-form input[type="date"],
+.completion-form input[type="file"],
+.completion-form textarea {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #c7c7c7;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.completion-form textarea {
+    resize: vertical;
+}
+
+.completion-form .hint {
+    color: #888;
+    font-weight: normal;
+    font-size: 0.85rem;
+}
+
+.completion-form fieldset {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.5rem 0.85rem 0.75rem;
+    margin: 0;
+}
+
+/* Admin-only "counts toward leaderboard" toggle on the edit form. Lay the
+   checkbox inline with its text (the form's default label is column-stacked). */
+label.admin-flag {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+label.admin-flag input {
+    width: auto;
+}
+
+/* "Solid, but no duck" badge: an admin-flagged completion that's shown on the
+   hike/profile but tallied nowhere. Amber (matching the hike-upcoming pill) so it
+   reads as "noted, not a win" — distinct from the green success / red error blocks. */
+.badge-noduck {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #ffe9c5;
+    color: #7a4a1f;
+    border: 1px solid #f0d49b;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.completion-form fieldset legend {
+    padding: 0 0.4rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* List of existing photos/tracks on the edit form. Each row has the
+   thumbnail (or track summary) plus a Remove checkbox. */
+.existing-files {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.existing-files li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.existing-files img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.track-row {
+    font-size: 0.95rem;
+}
+
+.track-stat {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+/* Override the flex-direction column from .completion-form label for
+   the inline "Remove" checkbox. More specific selector beats the
+   parent rule without needing !important. */
+.completion-form label.remove-checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: normal;
+    margin-left: auto;
+}
+
+/* Active-window note on the submission form — a soft yellow callout
+   that explains the date constraint without feeling like an error. */
+.window-note {
+    background: #fffae6;
+    border-left: 4px solid #d4ac0d;
+    padding: 0.7rem 0.9rem;
+    border-radius: 4px;
+    color: #444;
+    margin: 1rem 0;
+}
+
+/* Delete-completion button. Visually separated from the edit form
+   with top border to make it clear this is the destructive action. */
+.completion-delete-form {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+/* ============================================================
+   /me profile page layout. Three vertical sections: header,
+   stats badges, then the track map (if any) and the completion
+   list (reusing .hike-list classes from the catalog page).
+   ============================================================ */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #d9e2ec;
+    color: #34495e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.profile-byline h2 {
+    margin: 0 0 0.2rem 0;
+}
+
+.profile-meta {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Stats badges. auto-fit lets the three boxes stretch to fill on
+   wide screens and stack neatly on narrow ones without needing
+   a media query. minmax(160px, 1fr) keeps each box readable. */
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.stat {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 0.9rem 1.25rem;
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #1f3a5f;
+    line-height: 1.1;
+}
+
+.stat-label {
+    display: block;
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
+}
+
+/* Section headers on the profile page (My tracks, Completed hikes). */
+.profile-map-section h3,
+.profile-completions h3 {
+    margin: 2rem 0 0.75rem 0;
+}
+
+/* ============================================================
+   Team leaderboard on the home page. One row per user with
+   completions, sorted by duck count desc + alphabetical
+   tie-break. Top three rows get a subtle podium-color tint
+   (gold/silver/bronze) reinforced by medal emoji in the
+   rank column.
+   ============================================================ */
+.leaderboard {
+    margin: 2rem 0;
+}
+
+.leaderboard h2 {
+    margin-bottom: 1rem;
+}
+
+.leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.65rem 0.85rem;
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+}
+
+/* Podium tints — soft horizontal gradients fade the medal
+   color into white toward the right, so the row remains
+   readable and the avatar/name sit on a near-white field. */
+.leaderboard-podium-1 {
+    background: linear-gradient(to right, #fff5cc, #fff 75%);
+    border-color: #e6c84a;
+}
+.leaderboard-podium-2 {
+    background: linear-gradient(to right, #ececec, #fff 75%);
+    border-color: #bfbfbf;
+}
+.leaderboard-podium-3 {
+    background: linear-gradient(to right, #f6e1c8, #fff 75%);
+    border-color: #cd9b6a;
+}
+
+.leaderboard-rank {
+    width: 2.2rem;
+    text-align: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.leaderboard-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #d9e2ec;
+    color: #34495e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.leaderboard-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.leaderboard-count {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    color: #1f3a5f;
+}
+
+/* The duck PNG. object-fit:contain so any non-square aspect
+   ratio gets letterboxed inside the box rather than stretching
+   the duck's chain and sunglasses. */
+.duck-icon {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+    display: block;
+}
+
+.duck-number {
+    font-size: 1.15rem;
+}
+
+/* ============================================================
+   HERO BLOCK on the home page. Three visual variants driven by
+   the .hero-active / .hero-victory / .hero-empty modifier
+   class. Active gets a navy accent (action); victory gets a
+   gold accent (celebration); empty stays neutral.
+   ============================================================ */
+.hero {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    padding: 1.5rem 1.75rem;
+    margin: 1.5rem 0;
+}
+
+.hero h2 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+}
+
+/* Active state — strong navy accent on the left edge mirrors
+   the primary brand color used for hike routes throughout. */
+.hero-active {
+    border-left: 6px solid #1f3a5f;
+}
+
+.hero-active h2 {
+    color: #1f3a5f;
+}
+
+/* Victory state — gold accent reinforces the "won the duck"
+   feeling without being garish about it. */
+.hero-victory {
+    border-left: 6px solid #d4ac0d;
+}
+
+.hero-victory h2 {
+    color: #6e4d04;
+    margin-top: 0.75rem;
+}
+
+.hero-empty {
+    text-align: center;
+    color: #666;
+    padding: 2.5rem 1.5rem;
+}
+
+/* Map preview on the active hero — smaller than the detail
+   page version so it doesn't dominate the landing page. */
+.hero-map {
+    width: 100%;
+    height: 280px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #e8e8e8;
+    margin: 0.85rem 0 1rem 0;
+}
+
+/* Stats line under the title. Inline-flex with gap handles the
+   variable-width labels gracefully; flex-wrap means stats break
+   to a new line cleanly on narrow viewports. */
+.hero-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    color: #555;
+    font-size: 0.95rem;
+    margin: 0.5rem 0 1rem 0;
+}
+
+/* Replaces the old .hero-days countdown. Same weight and color so the
+   line still anchors the stats row, but it now reports a fact rather
+   than a deadline. */
+.hero-open {
+    font-weight: 600;
+    color: #1f3a5f;
+}
+
+/* Countdown line on the victory hero. Caps + letter-spacing
+   gives it an "announcement" feeling distinct from body copy. */
+.hero-countdown {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #6e4d04;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+/* Finisher grid — names + avatars on the victory hero. */
+.hero-finishers {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 1.25rem 0;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.hero-finisher {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    width: 72px;
+}
+
+.hero-finisher-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #d9e2ec;
+    color: #34495e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.hero-finisher-name {
+    font-size: 0.8rem;
+    text-align: center;
+    color: #555;
+    line-height: 1.2;
+}
+
+/* Secondary button variant — lower-key than the navy primary,
+   appropriate for "see last hike's photos" rather than the
+   primary "submit your completion" CTA. */
+.button-secondary,
+a.button-secondary {
+    background: #fff;
+    color: #1f3a5f;
+    border: 1px solid #1f3a5f;
+}
+
+.button-secondary:hover,
+a.button-secondary:hover {
+    background: #f0f4fa;
+    color: #1f3a5f;
+}
+
+/* ============================================================
+   STORY BLOCK — "The Tradition Begins"
+   Warm cream background visually distinguishes the editorial
+   content from the data-driven hero and leaderboard. Generous
+   line-height and a narrow-ish text column for comfortable
+   reading at a wider container width.
+   ============================================================ */
+.story {
+    background: #faf7f0;
+    border: 1px solid #e8e0c8;
+    border-radius: 8px;
+    padding: 1.5rem 1.75rem;
+    margin: 2rem 0;
+}
+
+.story h2 {
+    margin-top: 0;
+    margin-bottom: 0.85rem;
+    color: #6e4d04;
+    font-size: 1.3rem;
+}
+
+.story p {
+    line-height: 1.65;
+    color: #2f2a1f;
+    margin: 0;
+    max-width: 70ch;
+}
+
+.story p + p {
+    margin-top: 0.95rem;
+}
+
+/* "Up next" preview strip — sits directly under the active hero
+   when a future hike is queued. Uses the gold/yellow accent
+   palette (same family as the victory hero) so anticipation reads
+   stronger than the previous muted blue. Solid border with a 4px
+   gold left-edge stripe — narrower than the hero's 6px stripe so
+   it reads as related-but-secondary rather than competing. */
+.next-up {
+    background: #fff5cc;
+    border: 1px solid #e6c84a;
+    border-left: 4px solid #d4ac0d;
+    border-radius: 6px;
+    padding: 0.85rem 1.2rem;
+    margin: 0 0 1.5rem 0;
+    color: #6e4d04;
+    font-size: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: baseline;
+}
+
+.next-up-label {
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 700;
+    color: #6e4d04;
+    font-size: 0.82rem;
+}
+
+.next-up-name {
+    font-weight: 600;
+    color: #1f3a5f;
+    text-decoration: none;
+    font-size: 1.08rem;
+}
+
+.next-up-name:hover {
+    text-decoration: underline;
+}
+
+.next-up-when {
+    color: #6e4d04;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* ============================================================
+   PROFILE EDIT FORM (/me/edit)
+   The form itself reuses .auth-form (same layout as login/
+   register). These additions handle the bits that don't appear
+   on those forms: the Edit profile link in the /me header, the
+   current-avatar display block on the edit form, and a layout
+   tweak for the inline Remove checkbox.
+   ============================================================ */
+
+/* Edit profile link in the /me page header. margin-left: auto
+   pushes it to the right end of the flex row so it sits
+   opposite the avatar + byline rather than crowding them. */
+.profile-edit-link {
+    margin-left: auto;
+}
+
+/* Current-avatar display on the edit form. Shows the existing
+   avatar alongside its "Remove" checkbox so the user can see
+   what they're about to replace or remove. */
+.existing-avatar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.4rem;
+}
+
+.existing-avatar-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* Inline Remove-checkbox layout on .auth-form. Mirrors the same
+   pattern used inside .completion-form — kept as a separate
+   selector rather than generalizing so a future change to one
+   form's behavior doesn't unexpectedly leak to the other. */
+.auth-form label.remove-checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: normal;
+}
+
+/* "Got the duck" badge — appears on the catalog cards (and could be
+   reused elsewhere). Green tint reads as "done" at a glance; the
+   duck inside reinforces the "earned the duck" mental model.
+   line-height:0 keeps the badge compact vertically — without it,
+   browsers add line-box height around the inline-flex container
+   even though the inner img sets its own dimensions explicitly. */
+.hike-completed-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #e2f5ea;
+    border: 1px solid #b6e0c4;
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    line-height: 0;
+}
+
+/* ============================================================
+   CATALOG HIKE GRID — responsive cards, one per hike, with a
+   thumbnail map preview and a prominent duck tally. Replaces
+   the earlier compact list layout.
+   ============================================================ */
+.hike-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.hike-card {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Status-tinted left edge so you can read the page at a glance —
+   green-newest, navy-open, gold-upcoming. Same color family as the
+   hero-block accents on the home page. Note the absence of gray:
+   nothing in this catalog is retired. */
+.hike-card.hike-newest   { border-left: 4px solid #1f5d3a; }
+.hike-card.hike-open     { border-left: 4px solid #1f3a5f; }
+.hike-card.hike-upcoming { border-left: 4px solid #d4ac0d; }
+
+/* Map area. position:relative so the duck-tally overlay can
+   anchor to the top-right corner. Background fills before Leaflet
+   loads so the card doesn't briefly show a transparent box. */
+.hike-card-map-wrap {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    background: #e8e8e8;
+}
+
+.hike-card-map {
+    width: 100%;
+    height: 100%;
+}
+
+/* Duck tally overlay. z-index 1000 sits above Leaflet's tile and
+   control panes. Semi-transparent white background keeps the route
+   visible underneath while still giving the count enough contrast
+   to read at a glance. */
+.hike-card-tally {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 0.3rem 0.55rem 0.3rem 0.45rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.hike-card-tally-duck {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    display: block;
+}
+
+.hike-card-tally-count {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1f3a5f;
+}
+
+.hike-card-body {
+    padding: 0.85rem 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.hike-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.hike-card-name {
+    color: #1f3a5f;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    line-height: 1.2;
+}
+
+.hike-card-name:hover {
+    text-decoration: underline;
+}
+
+.hike-card-meta {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+}
+
+.hike-card-yours {
+    margin: 0.3rem 0 0 0;
+    color: #1f5d3a;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.catalog-attribution {
+    text-align: right;
+    color: #888;
+    font-size: 0.8rem;
+    margin: 1.5rem 0 0 0;
+}
+
+.hike-completed-badge img {
+    /* max-* instead of width/height for two reasons. (1) Robustness:
+       max-width / max-height aren't overridden by responsive patterns
+       like `img { width: auto }` the way explicit width/height can be,
+       so the badge stays correctly sized even if a global img rule
+       sneaks in elsewhere. (2) Aspect-ratio safety: if the source
+       favicon.png isn't perfectly square, max-* lets the browser
+       letterbox naturally instead of stretching the duck. */
+    max-width: 1rem;
+    max-height: 1rem;
+    object-fit: contain;
+    display: block;
+}
+
+
+/* ============================================================
+   PUBLIC PROFILES + PER-COMPLETION PAGES + PHOTO LIGHTBOX
+   Added when names became clickable (leaderboard, finishers,
+   completion rolls), tracks/photos got their own public page,
+   and the new-tab photo behavior became an in-page carousel.
+   ============================================================ */
+
+/* Name links render like the surrounding text, underline on hover.
+   Covers the leaderboard, the hike-detail completion roll, and the
+   completion page's byline heading. */
+a.leaderboard-name,
+.completion-byline strong a,
+.completion-byline h2 a {
+    color: inherit;
+    text-decoration: none;
+}
+a.leaderboard-name:hover,
+.completion-byline strong a:hover,
+.completion-byline h2 a:hover {
+    text-decoration: underline;
+}
+
+/* The finisher chip is now a link wrapping the avatar + name. Keep the
+   original avatar-over-name column layout; strip the default link look. */
+.hero-finisher-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    color: inherit;
+    text-decoration: none;
+}
+.hero-finisher-link:hover .hero-finisher-name {
+    text-decoration: underline;
+}
+
+/* "View completion" link. In the hike-detail header it sits at the right
+   of the row next to Edit; in the profile hike-list it's a small inline
+   link, NOT the flex:1 the catalog gives a list item's main anchor. */
+.completion-view-link {
+    font-size: 0.9rem;
+    color: #1f3a5f;
+}
+.completion-header .completion-view-link {
+    margin-left: auto;          /* push the View/Edit group to the right */
+}
+.completion-header .completion-edit {
+    margin-left: 0.75rem;       /* sit next to View rather than split across the row */
+}
+.hike-list-item > a.completion-view-link,
+.hike-list-item > a.completion-edit {
+    flex: 0 0 auto;             /* override .hike-list-item > a { flex: 1 } */
+    min-width: 0;
+}
+
+/* Clickable photo thumbnails open the lightbox. */
+.photo-thumb {
+    cursor: zoom-in;
+    display: block;
+}
+
+/* ---- Per-completion page (/completions/<id>) ---- */
+.completion-detail {
+    max-width: 60rem;
+    margin: 0 auto;
+}
+.completion-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.completion-detail-header .completion-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+}
+.completion-byline h2 {
+    margin: 0;
+    font-size: 1.35rem;
+}
+.completion-detail-meta {
+    margin: 0.15rem 0 0;
+    color: #666;
+}
+.completion-detail-meta a {
+    color: #1f3a5f;
+}
+.completion-detail-header .button-secondary {
+    margin-left: auto;          /* push the Edit button to the right edge */
+}
+.completion-map-section,
+.completion-photos-section {
+    margin-top: 1.5rem;
+}
+.completion-track-stats {
+    margin: 0.5rem 0 0;
+    color: #666;
+    font-size: 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+}
+.back-link {
+    margin-top: 1.5rem;
+}
+.back-link a {
+    color: #1f3a5f;
+}
+
+/* ---- Lightbox / photo carousel (lightbox.js) ----
+   Fixed full-viewport overlay, hidden until .is-open. z-index sits
+   above Leaflet's panes/controls (which top out around 1000). */
+.lightbox-lock {
+    overflow: hidden;           /* freeze background scroll while open */
+}
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.88);
+    padding: 2rem;
+}
+.lightbox.is-open {
+    display: flex;
+}
+.lightbox-figure {
+    margin: 0;
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+.lightbox-img {
+    max-width: 90vw;
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+.lightbox-caption {
+    color: #eee;
+    font-size: 0.95rem;
+    text-align: center;
+    max-width: 90vw;
+}
+.lightbox-btn {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+.lightbox-btn:hover {
+    background: rgba(0, 0, 0, 0.75);
+}
+.lightbox-close {
+    top: 1rem;
+    right: 1rem;
+    font-size: 2.4rem;
+}
+.lightbox-prev,
+.lightbox-next {
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2rem;
+}
+.lightbox-prev { left: 1rem; }
+.lightbox-next { right: 1rem; }
+
+/* Single-photo completions: no paging, so hide the arrows. */
+.lightbox-single .lightbox-prev,
+.lightbox-single .lightbox-next {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .lightbox { padding: 0.5rem; }
+    .lightbox-img { max-height: 75vh; }
+    .lightbox-btn { width: 2.5rem; height: 2.5rem; font-size: 1.6rem; }
+}
+
+/* ============================================================
+   ALWAYS-OPEN CHALLENGE MODEL
+   Styles added when hikes stopped having a closing date. The
+   recurring theme: the site now has to actively communicate
+   "this is still available" in places that previously said
+   nothing because availability was obvious from a countdown.
+   ============================================================ */
+
+/* Explanatory line at the bottom of the hero. Muted and small — it's a
+   standing fact, not an announcement, and it shouldn't compete with the
+   CTA button directly above it. */
+.hero-note {
+    margin: 0.85rem 0 0 0;
+    font-size: 0.92rem;
+    color: #555;
+}
+
+.hero-note a {
+    color: #1f3a5f;
+}
+
+/* Same message on a hike detail page, under the "I completed this hike"
+   button. Italic rather than muted-gray because it sits alone in the CTA
+   block with no surrounding body copy to recede from. */
+.cta-note {
+    margin: 0.4rem 0 0 0;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #666;
+}
+
+/* Shown on a hike detail page only when duck count and completion count
+   disagree, i.e. an admin flagged something. Amber to match .badge-noduck,
+   which is the flag this line is explaining. */
+.completions-duck-note {
+    margin: -0.25rem 0 0.75rem 0;
+    font-size: 0.9rem;
+    color: #7a4a1f;
+}
+
+/* ---- Recent finishers strip (home page) ----
+   Reuses .hero-finishers / .hero-finisher / .hero-finisher-avatar from the
+   old victory-lap block wholesale — same avatar-over-name chip, same flex
+   wrap. Only the additions below are new, because these chips carry a hike
+   name the victory-lap ones didn't need (every entry there was from the
+   same hike; here they're from all over the catalog). */
+.recent {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem 0.75rem 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.recent h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+/* Wider than the base .hero-finisher (72px) to give the hike name room to
+   wrap to two lines without squeezing into a column of single words. */
+.recent-finisher {
+    width: 96px;
+}
+
+/* The hike name under the member's name. Small, muted, and centered to sit
+   as a caption rather than a second title. line-height is tightened because
+   two-line names are the common case at this width. */
+.recent-finisher-hike {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: center;
+    line-height: 1.25;
+    margin-top: 0.1rem;
+}
+

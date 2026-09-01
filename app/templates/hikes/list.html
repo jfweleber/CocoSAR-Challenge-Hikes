@@ -1,0 +1,121 @@
+{#
+    ============================================================
+    Template: hikes/list.html
+    Extends:  base.html
+    Purpose:  Public catalog of all Challenge Hikes as a responsive
+              card grid. Each card shows a small (180px) Leaflet
+              map preview of the hike's route, the hike name, the
+              date it was posted, a status pill (newest / open /
+              upcoming), distance / elevation stats, and a duck
+              tally overlay on the map (always rendered, "×0"
+              included).
+
+              Read the status pill carefully: "open" does not mean
+              "still open for now" and "newest" does not mean "the
+              only one you can do." Every posted hike is open
+              permanently; the pill only distinguishes the current
+              headline from the rest of the catalog, and flags the
+              hikes that have not dropped yet.
+
+              Maps on the cards are thumbnails — all interactions
+              disabled so they don't fight page scroll. To see the
+              interactive route and elevation profile, the user
+              clicks through to the hike detail page.
+
+              For logged-in users who've earned a duck on a hike,
+              the card also shows a "you've completed this hike"
+              note inside the body.
+
+    Variables passed in from hikes.catalog():
+      - hikes: list of sqlite3.Row from list_hikes(), each row
+               carrying duck_count (SUM of counts — what the duck
+               icon shows) and completion_count (row count — what
+               the word "completions" means)
+      - today: today's ISO date string for status comparisons
+      - featured_id: id of the newest posted hike, or None
+      - completed_hike_ids: set of hike IDs the logged-in viewer
+                            has completed (empty set when anonymous)
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Hike catalog — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+
+{% block head_extra %}
+    {# Leaflet for the per-card map thumbnails. CDN-loaded; versions
+       pinned so an upstream breaking change can't silently shift the
+       page's behavior. #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+
+{% block content %}
+<h2>Challenge hike catalog</h2>
+
+{% if not hikes %}
+    <p>No hikes published yet.</p>
+{% else %}
+<div class="hike-grid">
+    {% for h in hikes %}
+        {% if h.posted_on > today %}{% set status = 'upcoming' %}
+        {% elif h.id == featured_id %}{% set status = 'newest' %}
+        {% else %}{% set status = 'open' %}{% endif %}
+        <article class="hike-card hike-{{ status }}">
+            <div class="hike-card-map-wrap">
+                {# The data-geojson attribute is consumed by
+                   catalog_maps.js to render the thumbnail map. #}
+                <div class="hike-card-map" data-geojson='{{ h.route_geojson | safe }}'></div>
+
+                {# Duck tally overlay — top-right of the map. Always
+                   rendered, "×0" included, so the engagement gap is
+                   visible at a glance for hikes no one has done yet. #}
+                {# Duck icon, so duck_count. The tooltip spells out both
+                   numbers when they disagree — which only happens if an
+                   admin flagged a completion "solid, but no duck". #}
+                <div class="hike-card-tally"
+                     title="{{ h.duck_count }} duck{{ '' if h.duck_count == 1 else 's' }} from {{ h.completion_count }} completion{{ '' if h.completion_count == 1 else 's' }}">
+                    <img src="{{ url_for('static', filename='img/duck.png') }}"
+                         alt="duck" class="hike-card-tally-duck">
+                    <span class="hike-card-tally-count">×{{ h.duck_count }}</span>
+                </div>
+            </div>
+            <div class="hike-card-body">
+                <div class="hike-card-header">
+                    <a class="hike-card-name" href="{{ url_for('hikes.detail', slug=h.slug) }}">{{ h.name }}</a>
+                    <span class="hike-status">{{ status }}</span>
+                </div>
+                <p class="hike-card-meta">
+                    <span>{{ 'Drops' if status == 'upcoming' else 'Posted' }} {{ h.posted_on }}</span>
+                    {% if h.distance_m %}<span>{{ '%.1f' | format(h.distance_m / 1609.344) }} mi</span>{% endif %}
+                    {% if h.elev_gain_m %}<span>{{ '%.0f' | format(h.elev_gain_m * 3.28084) }} ft gain</span>{% endif %}
+                </p>
+                {% if h.id in completed_hike_ids %}
+                {# "Got the duck" indicator for the logged-in viewer.
+                   Anonymous viewers see no card-level completion
+                   indicator because completed_hike_ids is empty. #}
+                <p class="hike-card-yours">
+                    <span class="hike-completed-badge" title="You've completed this hike">
+                        <img src="{{ url_for('static', filename='img/favicon.png') }}" alt="completed">
+                    </span>
+                    <span>You've completed this hike</span>
+                </p>
+                {% endif %}
+            </div>
+        </article>
+    {% endfor %}
+</div>
+
+{# Single page-level USGS attribution. Per-map attribution is
+   suppressed in catalog_maps.js to keep the grid uncluttered;
+   USGS terms only require attribution be visible on the page. #}
+<p class="catalog-attribution">
+    Map tiles &copy;
+    <a href="https://apps.nationalmap.gov/viewer/" target="_blank" rel="noopener">USGS The National Map</a>.
+</p>
+{% endif %}
+{% endblock %}
+
+{% block body_end %}
+{% if hikes %}
+    <script src="{{ url_for('static', filename='js/catalog_maps.js') }}"></script>
+{% endif %}
+{% endblock %}

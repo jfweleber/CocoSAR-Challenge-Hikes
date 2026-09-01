@@ -1,0 +1,36 @@
+{#
+    ============================================================
+    Template: auth/login.html
+    Extends:  base.html
+    Purpose:  Email/password login form. POSTs back to auth.login.
+              On success, redirects to ?next= (set by Flask-Login's
+              @login_required protections) or to the home page.
+              On failure, flashes a generic "Invalid email or
+              password" message — deliberately vague so the form
+              doesn't leak which half was wrong.
+
+    Variables passed in from auth.login():
+      - email (optional): the email the user last typed. Repopulates
+                          the field after a failed submit. Absent
+                          on the initial GET.
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Log in — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+{% block content %}
+<h2>Log in</h2>
+<form method="post" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>
+        Email
+        <input type="email" name="email" value="{{ email or '' }}" required autofocus>
+    </label>
+    <label>
+        Password
+        <input type="password" name="password" required>
+    </label>
+    <button type="submit">Log in</button>
+</form>
+<p class="auth-alt"><a href="{{ url_for('auth.forgot') }}">Forgot your password?</a></p>
+<p class="auth-alt"><a href="{{ url_for('auth.register') }}">Need an account? Register.</a></p>
+{% endblock %}

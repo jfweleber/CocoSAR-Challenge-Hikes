@@ -1,0 +1,56 @@
+{#
+    ============================================================
+    Template: hikes/admin_list.html
+    Extends:  base.html
+    Purpose:  Admin dashboard for hike CRUD. Lists every hike in
+              the DB with quick Edit and Delete actions. Reachable
+              only by users with is_admin = 1 — the gate lives on
+              the route via @admin_required, not in this template.
+
+              Delete uses a POST form with a JS confirm() prompt;
+              a GET link would be CSRF-able and could be triggered
+              by browser prefetchers crawling the page.
+
+    Variables passed in from hikes.admin_list():
+      - hikes: list of sqlite3.Row from the hikes table
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Manage hikes — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h2>Manage hikes</h2>
+    <a class="button" href="{{ url_for('hikes.admin_new') }}">Add a hike</a>
+</div>
+{% if not hikes %}
+    <p>No hikes yet. <a href="{{ url_for('hikes.admin_new') }}">Add the first one.</a></p>
+{% else %}
+<table class="admin-table">
+    <thead>
+        <tr><th>Name</th><th>Slug</th><th>Posted</th><th>Ducks</th><th>Distance</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for h in hikes %}
+        <tr>
+            <td><a href="{{ url_for('hikes.detail', slug=h.slug) }}">{{ h.name }}</a></td>
+            <td><code>{{ h.slug }}</code></td>
+            <td>{{ h.posted_on }}</td>
+            {# duck_count / completion_count both come from list_hikes(); showing
+               them together here is the quickest way for an admin to spot a
+               hike where a completion has been flagged. #}
+            <td>{{ h.duck_count }} / {{ h.completion_count }}</td>
+            <td>{% if h.distance_m %}{{ '%.1f' | format(h.distance_m / 1609.344) }} mi{% else %}—{% endif %}</td>
+            <td class="admin-actions">
+                <a href="{{ url_for('hikes.admin_edit', hike_id=h.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('hikes.admin_delete', hike_id=h.id) }}"
+                      onsubmit="return confirm('Delete hike &quot;{{ h.name }}&quot;? All completions, photos, and tracks for it will also be deleted.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="link-button">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

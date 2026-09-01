@@ -1,0 +1,13 @@
+Hi {{ user.name }},
+
+Someone — hopefully you — asked to reset the password on your
+CocoSAR Mountain Rescue Challenge Hikes account. To set a new
+password, click this link within the next hour:
+
+    {{ reset_url }}
+
+If you didn't ask for this, you can safely ignore the email. Your
+password won't change unless someone clicks the link above and
+submits a new one.
+
+— The Challenge Hike site

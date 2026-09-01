@@ -1,0 +1,111 @@
+{#
+    ============================================================
+    Template: completions/view.html
+    Extends:  base.html
+    Purpose:  Public per-completion page (/completions/<id>). Shows
+              who finished and when, their submitted track(s) drawn
+              over the hike's official route, and the full photo
+              gallery in a click-to-open lightbox carousel.
+
+              Public by design — anyone can view a completion's track
+              and photos. Edit/delete controls appear only when
+              can_edit is set (owner or admin), decided in the route.
+
+    Variables passed in from completions.view():
+      - completion:     sqlite3.Row of the completion
+      - user:           the User who earned it
+      - hike:           sqlite3.Row of the parent hike
+      - photos:         list of completion_photos rows
+      - tracks:         list of completion_tracks rows
+      - track_geojsons: parsed GeoJSON Features (one per track) for the map
+      - can_edit:       True for the owner or an admin
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}{{ user.name }} — {{ hike.name }}{% endblock %}
+
+{% block head_extra %}
+{% if tracks %}
+    {# Leaflet only loaded when there's a track to draw. #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<article class="completion-detail">
+    <section class="completion-detail-header">
+        {% if user.avatar_filename %}
+            <img class="completion-avatar"
+                 src="{{ url_for('uploaded_file', subdir='avatars', filename=user.avatar_filename) }}"
+                 alt="">
+        {% else %}
+            <span class="completion-avatar avatar-placeholder">{{ user.name[0] | upper }}</span>
+        {% endif %}
+        <div class="completion-byline">
+            <h2><a href="{{ url_for('profiles.view', user_id=user.id) }}">{{ user.name }}</a></h2>
+            <p class="completion-detail-meta">
+                Completed
+                <a href="{{ url_for('hikes.detail', slug=hike.slug) }}">{{ hike.name }}</a>
+                on {{ completion.completed_on }}
+                {% if not completion.counts %}<span class="badge-noduck">Solid, but no duck</span>{% endif %}
+            </p>
+        </div>
+        {% if can_edit %}
+        <a class="button button-secondary" href="{{ url_for('completions.edit', completion_id=completion.id) }}">Edit</a>
+        {% endif %}
+    </section>
+
+    {% if completion.comment %}
+    <p class="completion-comment">{{ completion.comment }}</p>
+    {% endif %}
+
+    {% if tracks %}
+    <section class="completion-map-section">
+        <h3>Track</h3>
+        {# Official route + this user's track(s). Same data-attribute pattern
+           the edit map uses; completion_map.js draws both. #}
+        <div id="completion-map" class="hike-map"
+             data-route='{{ hike.route_geojson | safe }}'
+             data-tracks='{{ track_geojsons | tojson | safe }}'></div>
+        <p class="completion-track-stats">
+            {% for t in tracks %}
+            <span class="track-stat">{{ t.format | upper }} track{% if t.distance_m %} · {{ '%.1f' | format(t.distance_m / 1609.344) }} mi{% endif %}{% if t.elev_gain_m %} · {{ '%.0f' | format(t.elev_gain_m * 3.28084) }} ft gain{% endif %}</span>
+            {% endfor %}
+        </p>
+    </section>
+    {% endif %}
+
+    {% if photos %}
+    <section class="completion-photos-section">
+        <h3>Photos ({{ photos | length }})</h3>
+        {# data-lightbox marks this as one carousel group; lightbox.js wires
+           every .photo-thumb inside to the shared overlay. #}
+        <div class="completion-photos photo-gallery" data-lightbox>
+            {% for photo in photos %}
+            {# Grid shows the thumbnail; the lightbox opens the full file.
+               NULL thumb_filename falls back to full size — see the same
+               pattern (and the reasoning) in hikes/detail.html. #}
+            <a class="photo-thumb"
+               href="{{ url_for('uploaded_file', subdir='photos', filename=photo.filename) }}"
+               {% if photo.caption %}data-caption="{{ photo.caption }}"{% endif %}>
+                <img src="{{ url_for('uploaded_file', subdir='photos', filename='thumbs/' ~ photo.thumb_filename) if photo.thumb_filename else url_for('uploaded_file', subdir='photos', filename=photo.filename) }}"
+                     alt="photo by {{ user.name }}" loading="lazy">
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <p class="back-link">
+        <a href="{{ url_for('hikes.detail', slug=hike.slug) }}">&larr; Back to {{ hike.name }}</a>
+    </p>
+</article>
+{% endblock %}
+
+{% block body_end %}
+{% if tracks %}
+    <script src="{{ url_for('static', filename='js/completion_map.js') }}"></script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/lightbox.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{#
+    ============================================================
+    Template: profiles/view.html
+    Extends:  base.html
+    Purpose:  User profile page. Serves BOTH the owner's own /me view
+              and the public /users/<id> view — the only differences
+              are the "Edit profile" button and the per-completion
+              "Edit" links, gated on is_owner (plus admin for the
+              completion edits). Sections: header (avatar, name,
+              member-since), stat badges, an aggregated track map,
+              and the list of completed hikes.
+
+              The track map renders only when the user has at least
+              one uploaded track, so photo-only finishers collapse
+              that section (and skip loading Leaflet) cleanly.
+
+    Variables passed in from profiles.me() / profiles.view():
+      - profile_user:   the User whose profile this is
+      - is_owner:       True when the logged-in user is this user
+      - stats:          row with duck_count, total_distance_m,
+                        total_elev_gain_m
+      - completions:    rows with c.* plus hike_name, hike_slug,
+                        posted_on joined in
+      - tracks_for_map: list of {hike_name, hike_slug, completed_on,
+                        geojson}; drives profile_map.js
+      - today:          today's ISO date (Arizona)
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}{{ profile_user.name }} — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+
+{% block head_extra %}
+{% if tracks_for_map %}
+    {# Leaflet only — loaded only when there's a track to draw. #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="profile-header">
+    {% if profile_user.avatar_filename %}
+        <img class="profile-avatar"
+             src="{{ url_for('uploaded_file', subdir='avatars', filename=profile_user.avatar_filename) }}"
+             alt="">
+    {% else %}
+        {# Fallback: first initial in a circle, same pattern as the completion roll. #}
+        <span class="profile-avatar avatar-placeholder">{{ profile_user.name[0] | upper }}</span>
+    {% endif %}
+    <div class="profile-byline">
+        <h2>{{ profile_user.name }}</h2>
+        {# created_at is an ISO datetime; first 10 chars = YYYY-MM-DD. #}
+        <p class="profile-meta">Member since {{ profile_user.created_at[:10] }}</p>
+    </div>
+    {% if is_owner %}
+    <a class="button button-secondary profile-edit-link" href="{{ url_for('profiles.edit') }}">Edit profile</a>
+    {% endif %}
+</section>
+
+<section class="profile-stats">
+    <div class="stat">
+        <span class="stat-value">{{ stats.duck_count }}</span>
+        <span class="stat-label">{{ 'duck' if stats.duck_count == 1 else 'ducks' }}</span>
+    </div>
+    <div class="stat">
+        {# DB stores SI; convert to imperial for display, matching the rest of the site. #}
+        <span class="stat-value">{{ '%.1f' | format(stats.total_distance_m / 1609.344) }}</span>
+        <span class="stat-label">mi tracked</span>
+    </div>
+    <div class="stat">
+        <span class="stat-value">{{ '%.0f' | format(stats.total_elev_gain_m * 3.28084) }}</span>
+        <span class="stat-label">ft elevation gain</span>
+    </div>
+</section>
+
+{% if tracks_for_map %}
+<section class="profile-map-section">
+    <h3>{{ 'My tracks' if is_owner else 'Tracks' }}</h3>
+    <div id="profile-map" class="hike-map"
+         data-tracks='{{ tracks_for_map | tojson | safe }}'></div>
+</section>
+{% endif %}
+
+<section class="profile-completions">
+    <h3>Completed hikes ({{ completions | length }})</h3>
+    {% if not completions %}
+        {% if is_owner %}
+        <p>You haven't completed any hikes yet.
+        Browse the <a href="{{ url_for('hikes.catalog') }}">catalog</a> to earn your first duck.</p>
+        {% else %}
+        <p>{{ profile_user.name }} hasn't completed any hikes yet.</p>
+        {% endif %}
+    {% else %}
+    {# Reuses the catalog page's .hike-list styling. The status pill that used
+       to sit here is gone: it could only ever read "open" now, since you can't
+       complete a hike that hasn't been posted and nothing ever closes. A pill
+       with one possible value is noise. #}
+    <ul class="hike-list">
+        {% for c in completions %}
+        <li class="hike-list-item">
+            <a href="{{ url_for('hikes.detail', slug=c.hike_slug) }}">{{ c.hike_name }}</a>
+            <span class="hike-dates">Completed {{ c.completed_on }}</span>
+            {% if not c.counts %}<span class="badge-noduck">Solid, but no duck</span>{% endif %}
+            <a class="completion-view-link" href="{{ url_for('completions.view', completion_id=c.id) }}">View completion</a>
+            {% if is_owner or (current_user.is_authenticated and current_user.is_admin) %}
+            <a class="completion-edit" href="{{ url_for('completions.edit', completion_id=c.id) }}">Edit</a>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block body_end %}
+{% if tracks_for_map %}
+    <script src="{{ url_for('static', filename='js/profile_map.js') }}"></script>
+{% endif %}
+{% endblock %}

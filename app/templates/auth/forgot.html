@@ -1,0 +1,37 @@
+{#
+    ============================================================
+    Template: auth/forgot.html
+    Extends:  base.html
+    Purpose:  "Forgot password" request form. Asks for the user's
+              email and POSTs to auth.forgot, which generates a
+              one-time token and emails it — or silently does
+              nothing if the email isn't registered or the user
+              just requested another reset.
+
+              The form ALWAYS shows the same generic success
+              message after submit, regardless of whether the
+              email was found. See auth.forgot()'s docstring for
+              the email-enumeration security reasoning.
+
+    Variables: none.
+    ============================================================
+#}
+{% extends "base.html" %}
+{% block title %}Reset password — CocoSAR Mountain Rescue Challenge Hikes{% endblock %}
+
+{% block content %}
+<h2>Reset your password</h2>
+<p>Enter the email you registered with. If it's on file, a reset link will land in your inbox within a minute. The link expires after 1 hour.</p>
+
+<form method="post" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>
+        Email
+        <input type="email" name="email" required autofocus>
+    </label>
+    <div class="form-actions">
+        <button type="submit">Send reset link</button>
+        <a href="{{ url_for('auth.login') }}">Back to login</a>
+    </div>
+</form>
+{% endblock %}
