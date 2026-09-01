@@ -17,6 +17,8 @@
 
 import io                              # wrap raw bytes as a file-like object for gpxpy
 import math                            # trig for the haversine distance computation
+from datetime import datetime, timezone  # UTC stamp in the exported GPX metadata
+from xml.sax.saxutils import escape     # XML-escape hike names before they reach the document
 
 import gpxpy                           # GPX parser; exposes .tracks/.segments/.points
 from lxml import etree                 # XML parser with XPath, used for KML
@@ -93,6 +95,70 @@ def parse_track(file_bytes, fmt):
         "properties": {},
     }
     return geojson, distance, gain
+
+
+def build_gpx(coords, name, description=None, link=None):
+    """[lon, lat, elev] coordinates -> a GPX 1.1 document, as a string.
+
+    The rough inverse of parse_track, used to hand members a file they
+    can load into Gaia, CalTopo, or a Garmin unit and follow on the
+    ground.
+
+    We generate from the stored coordinates rather than serving back the
+    original upload, and that is a deliberate trade. It costs byte-for-
+    byte fidelity with what the admin uploaded. It buys three things:
+    output is always GPX no matter whether a GPX or a KML came in; the
+    track carries the hike's own name instead of whatever the recorder
+    happened to call it ("The Way Up", "Q3 2026 Challenge Hike"); and the
+    repeated stationary positions _dedupe already stripped stay stripped
+    -- on the Flag Slabbath route that is 9,000 points down to 1,800, a
+    925 KB file down to roughly a fifth of that. Since none of the source
+    files carry waypoints or routes, nothing else is lost in the round
+    trip.
+
+    Elevation is omitted entirely when every point reads exactly 0.0.
+    That is the value _parse_gpx substitutes when a source file has no
+    elevation data, and asserting sea level for a mountain trail is
+    worse than saying nothing at all -- a consumer that sees no <ele>
+    knows to fall back on its own terrain data.
+
+    Coordinates are written to 6 decimal places (~0.11 m at this
+    latitude), which is finer than any consumer GPS resolves and keeps
+    the file small.
+    """
+    has_elev = any(round(c[2], 3) != 0.0 for c in coords)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    out = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<gpx version="1.1" creator="CocoSAR Challenge Hikes"',
+        '     xmlns="http://www.topografix.com/GPX/1/1"',
+        '     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+        '     xsi:schemaLocation="http://www.topografix.com/GPX/1/1',
+        '                         http://www.topografix.com/GPX/1/1/gpx.xsd">',
+        '  <metadata>',
+        f'    <name>{escape(name)}</name>',
+    ]
+    if description:
+        out.append(f'    <desc>{escape(description)}</desc>')
+    if link:
+        # The link element makes a file that gets passed around by text
+        # message still say where it came from.
+        out.append(f'    <link href="{escape(link)}"><text>{escape(name)}</text></link>')
+    out += [
+        f'    <time>{stamp}</time>',
+        '  </metadata>',
+        '  <trk>',
+        f'    <name>{escape(name)}</name>',
+        '    <trkseg>',
+    ]
+    for lon, lat, elev in coords:
+        if has_elev:
+            out.append(f'      <trkpt lat="{lat:.6f}" lon="{lon:.6f}"><ele>{elev:.1f}</ele></trkpt>')
+        else:
+            out.append(f'      <trkpt lat="{lat:.6f}" lon="{lon:.6f}"/>')
+    out += ['    </trkseg>', '  </trk>', '</gpx>', '']
+    return "\n".join(out)
 
 
 def _parse_gpx(data):

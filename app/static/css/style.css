@@ -300,12 +300,23 @@ a.button:hover {
     flex-wrap: wrap;
 }
 
-.hike-format {
-    font-size: 0.75rem;
+/* Sits in the .hike-meta line beside distance and gain. Keeps the old
+   .hike-format badge's footprint so the meta row doesn't reflow, but reads
+   as the action it is rather than as a passive label. */
+.hike-gpx {
+    font-size: 0.8rem;
     background: #eee;
-    color: #555;
-    padding: 0.1rem 0.4rem;
+    color: #2b5d34;
+    padding: 0.1rem 0.5rem;
     border-radius: 3px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.hike-gpx:hover,
+.hike-gpx:focus {
+    background: #2b5d34;
+    color: #fff;
 }
 
 .hike-notes {

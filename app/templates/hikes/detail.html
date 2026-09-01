@@ -51,7 +51,10 @@
            Imperial conversion happens at display time only. #}
         {% if hike.distance_m %}<span>{{ '%.2f' | format(hike.distance_m / 1609.344) }} mi</span>{% endif %}
         {% if hike.elev_gain_m %}<span>{{ '%.0f' | format(hike.elev_gain_m * 3.28084) }} ft gain</span>{% endif %}
-        <span class="hike-format">{{ hike.route_format | upper }}</span>
+        {# Generated from the stored route, so it is GPX regardless of what was
+           uploaded. Replaced the old source-format badge, which described an
+           admin detail no member has a use for. #}
+        <a class="hike-gpx" href="{{ url_for('hikes.route_gpx', slug=hike.slug) }}">Download GPX</a>
     </p>
 
     {% if hike.notes %}<div class="hike-notes">{{ hike.notes }}</div>{% endif %}

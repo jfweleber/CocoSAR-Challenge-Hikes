@@ -16,7 +16,7 @@ import uuid                                # route filenames (UUIDs are path-saf
 from functools import wraps                # preserve view function metadata in the admin_required decorator
 from pathlib import Path                   # cross-platform path handling
 
-from flask import (Blueprint, abort, current_app, flash, redirect,
+from flask import (Blueprint, Response, abort, current_app, flash, redirect,
                    render_template, request, url_for)
 from flask_login import current_user, login_required
 
@@ -25,7 +25,7 @@ from .models import (create_hike, delete_hike, get_completion_for_user_hike,
                      get_hike_tallies, get_photos_for_completion,
                      list_completions_for_hike, list_completions_for_user,
                      list_hikes, update_hike)
-from .track_parser import parse_track
+from .track_parser import build_gpx, parse_track
 from .timeutils import today_az            # Arizona-local "today" for the active/closed/upcoming state machine
 
 bp = Blueprint("hikes", __name__)
@@ -154,6 +154,49 @@ def detail(slug):
                            tallies=tallies,
                            completions=completions,
                            user_completion=user_completion)
+
+
+@bp.route("/hikes/<slug>/route.gpx")
+def route_gpx(slug):
+    """Download the hike's route as a GPX file, for following on the ground.
+
+    Built from the stored GeoJSON rather than the uploaded file — see
+    build_gpx() for why that trade is worth making.
+
+    Deliberately not gated on hike state. An `upcoming` hike already
+    renders its full route on the detail page above, so withholding the
+    file here would protect nothing; it would only make the button
+    inconsistent with the map sitting next to it. If queued routes ever
+    need to stay secret until they drop, the map is what has to change
+    first, and this should follow it.
+
+    No login required, matching the page itself. The uploaded route
+    files are already world-readable at /uploads/tracks/<uuid>.gpx —
+    this endpoint doesn't widen access, it just makes it findable and
+    hands over a file named after the hike instead of a UUID.
+    """
+    hike = get_hike_by_slug(slug)
+    if not hike:
+        abort(404)
+
+    coords = json.loads(hike["route_geojson"])["geometry"]["coordinates"]
+    body = build_gpx(
+        coords,
+        name=hike["name"],
+        description=(f"Coconino County Sheriff's SAR Mountain Rescue Unit "
+                     f"Challenge Hike, posted {hike['posted_on']}."),
+        link=url_for("hikes.detail", slug=hike["slug"], _external=True),
+    )
+
+    # The slug is already constrained to [a-z0-9-] by _slugify, so it
+    # needs no further escaping to sit safely inside the header value.
+    return Response(
+        body,
+        mimetype="application/gpx+xml",
+        headers={
+            "Content-Disposition": f'attachment; filename="{hike["slug"]}.gpx"',
+        },
+    )
 
 
 # ===============================================================================
