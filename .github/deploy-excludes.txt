@@ -36,3 +36,9 @@ venv/
 node_modules/
 __pycache__/
 *.pyc
+
+# Operational docs that live on the server and are deliberately gitignored
+# (see .gitignore). They must survive deploys rather than be deleted.
+CLAUDE.md
+DEPLOY-NOTES.md
+educational_commenting_guide.md
