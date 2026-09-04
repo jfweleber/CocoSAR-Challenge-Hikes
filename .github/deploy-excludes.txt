@@ -16,6 +16,11 @@
 uploads/
 *.db
 *.db-journal
+# SQLite WAL mode writes these two beside the database. They are NOT
+# matched by *.db, and a deploy landing while a checkpoint is pending
+# would delete un-checkpointed writes.
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
 
